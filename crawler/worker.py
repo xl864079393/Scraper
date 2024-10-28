@@ -66,9 +66,10 @@ class Worker(Thread):
                 self.frontier.mark_url_complete(tbd_url)
                 continue
 
+            scraped_urls = scraper.scraper(tbd_url, resp)
+
             # Check if the URL is similar to a previously seen page
             content_hash = self.hash_content(resp.raw_response.content.decode('utf-8', 'ignore'))
-            scraped_urls = scraper.scraper(tbd_url, resp)
             if content_hash not in self.seen_hashes:
                 self.seen_hashes.add(content_hash)
                 for scraped_url in scraped_urls:

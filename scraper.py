@@ -53,6 +53,9 @@ def is_valid(url):
         if any(keyword in url.lower() for keyword in [".pdf", "=", "?", "login"]):
             return False
 
+        if re.search(r"/\d{4}-\d{2}-\d{2}$", parsed.path):
+            return False
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
