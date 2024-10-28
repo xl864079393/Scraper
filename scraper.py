@@ -4,7 +4,11 @@ import re
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    valid_links = [link for link in links if is_valid(link)]
+    with open("crawled_urls.txt", "a") as f:
+        for link in valid_links:
+            f.write(link + "\n")
+    return valid_links
 
 def extract_next_links(url, resp):
     # Implementation required.
