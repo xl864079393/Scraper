@@ -61,6 +61,11 @@ class Worker(Thread):
                 self.frontier.mark_url_complete(tbd_url)
                 continue
 
+            if resp.raw_response is None:
+                self.logger.error(f"Failed to fetch {tbd_url}")
+                self.frontier.mark_url_complete(tbd_url)
+                continue
+
             # Check if the URL is similar to a previously seen page
             content_hash = self.hash_content(resp.raw_response.content.decode('utf-8', 'ignore'))
             scraped_urls = scraper.scraper(tbd_url, resp)
