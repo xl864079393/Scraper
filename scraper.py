@@ -3,8 +3,6 @@ from bs4 import BeautifulSoup
 import re
 
 def scraper(url, resp):
-    with open("crawled_urls.txt", "w") as file:
-        pass
     links = extract_next_links(url, resp)
     valid_links = [link for link in links if is_valid(link)]
     with open("crawled_urls.txt", "a") as f:
