@@ -11,11 +11,14 @@ class Crawler(object):
         self.worker_factory = worker_factory
 
     def start_async(self):
-        self.workers = [
-            self.worker_factory(worker_id, self.config, self.frontier)
-            for worker_id in range(self.config.threads_count)]
-        for worker in self.workers:
-            worker.start()
+        try:
+            self.workers = [
+                self.worker_factory(worker_id, self.config, self.frontier)
+                for worker_id in range(self.config.threads_count)]
+            for worker in self.workers:
+                worker.start()
+        except Exception as e:
+            self.logger.error(f"Worker startup failed: {e}")
 
     def start(self):
         self.start_async()

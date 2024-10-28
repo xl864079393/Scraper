@@ -38,11 +38,11 @@ class Frontier(object):
     def _parse_save_file(self):
         ''' This function can be overridden for alternate saving techniques. '''
         total_count = len(self.save)
-        tbd_count = 0
-        for url, completed in self.save.values():
-            if not completed and is_valid(url):
-                self.to_be_downloaded.append(url)
-                tbd_count += 1
+        self.to_be_downloaded = [
+            url for url, completed in self.save.values()
+            if not completed and is_valid(url)
+        ]
+        tbd_count = len(self.to_be_downloaded)
         self.logger.info(
             f"Found {tbd_count} urls to be downloaded from {total_count} "
             f"total urls discovered.")
