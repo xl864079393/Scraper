@@ -14,6 +14,7 @@ class Worker(Thread):
         self.config = config
         self.frontier = frontier
         self.seen_hashes = set()
+        self.current_progress = 0
         self.MAX_URL_SIZE = 1024 * 1024  # Example threshold
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
@@ -77,4 +78,9 @@ class Worker(Thread):
             else:
                 self.logger.info(f"Skipping similar page for URL: {tbd_url}")
             self.frontier.mark_url_complete(tbd_url)
+            self.current_progress += 1
+            if self.current_progress % 100 == 0:
+                print("------------------")
+                print("Progress: ", self.current_progress)
+                print("------------------")
             time.sleep(self.config.time_delay)
