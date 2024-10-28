@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import re
 
 def scraper(url, resp):
+    with open("crawled_urls.txt", "w") as file:
+        pass
     links = extract_next_links(url, resp)
     valid_links = [link for link in links if is_valid(link)]
     with open("crawled_urls.txt", "a") as f:
@@ -57,7 +59,7 @@ def is_valid(url):
         if any(keyword in url.lower() for keyword in [".pdf", "=", "?", "login"]):
             return False
 
-        if re.search(r"/\d{4}-\d{2}-\d{2}$", parsed.path):
+        if re.search(r"/\d{4}-\d{2}-\d{2}", parsed.path) and any(kw in parsed.path.lower() for kw in ["events", "meeting", "calendar", "day"]):
             return False
 
         return not re.match(
