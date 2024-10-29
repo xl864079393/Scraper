@@ -43,6 +43,11 @@ class Worker(Thread):
             # add multiple threads to the frontier
             with self.frontier.lock:
                 tbd_url = self.frontier.get_tbd_url()
+                self.current_progress += 1
+                if self.current_progress % 100 == 0:
+                    print("------------------")
+                    print("Progress: ", self.current_progress)
+                    print("------------------")
                 if not tbd_url:
                     self.logger.info("Frontier is empty. Stopping Crawler.")
                     break
@@ -87,9 +92,4 @@ class Worker(Thread):
             else:
                 self.logger.info(f"Skipping similar page for URL: {tbd_url}")
             self.frontier.mark_url_complete(tbd_url)
-            self.current_progress += 1
-            if self.current_progress % 100 == 0:
-                print("------------------")
-                print("Progress: ", self.current_progress)
-                print("------------------")
             time.sleep(self.config.time_delay)
