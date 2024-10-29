@@ -40,10 +40,19 @@ class Worker(Thread):
         
     def run(self):
         while True:
-            tbd_url = self.frontier.get_tbd_url()
-            if not tbd_url:
-                self.logger.info("Frontier is empty. Stopping Crawler.")
-                break
+            # add multiple threads to the frontier
+            with self.frontier.lock:
+                tbd_url = self.frontier.get_tbd_url()
+                if not tbd_url:
+                    self.logger.info("Frontier is empty. Stopping Crawler.")
+                    break
+                domain = tbd_url.split("/")[2]
+                if domain not in self.frontier.domain_last_time:
+                    self.frontier.domain_last_time[domain] = time.time()
+                elif time.time() - self.frontier.domain_last_time[domain] < self.config.time_delay:
+                    time.sleep(self.config.time_delay - (time.time() - self.frontier.domain_last_time[domain]))
+                    self.frontier.domain_last_time[domain] = time.time()
+
             print(f"Downloading {tbd_url}")
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(

@@ -31,7 +31,6 @@ def extract_next_links(url, resp):
         for link in soup.find_all('a', href=True):
             href = link['href']
             # Resolve relative URLs
-            #full_url = urlparse(url)._replace(path=href).geturl()
             abs_url = urldefrag(href)[0]
             links.add(abs_url)
     except Exception as e:
