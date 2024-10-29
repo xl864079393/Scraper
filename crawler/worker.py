@@ -1,4 +1,5 @@
 from threading import Thread
+from urllib.parse import urlparse, urldefrag
 import hashlib
 
 from inspect import getsource
@@ -51,7 +52,7 @@ class Worker(Thread):
                 if not tbd_url:
                     self.logger.info("Frontier is empty. Stopping Crawler.")
                     break
-                domain = tbd_url.split("/")[2]
+                domain = urlparse(tbd_url).netloc
                 if domain not in self.frontier.domain_last_time:
                     self.frontier.domain_last_time[domain] = time.time()
                 elif time.time() - self.frontier.domain_last_time[domain] < self.config.time_delay:
