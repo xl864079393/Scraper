@@ -86,16 +86,22 @@ class Worker(Thread):
 
         self.shared_data['word_counter'].update(words)
 
+    def print_progress(self, shared_data):
+        print(f"Unique pages found: {len(shared_data['unique_urls'])}")
+        print(
+            f"Longest page URL: {shared_data['longest_page']['url']} with {shared_data['longest_page']['word_count']} words.")
+        print("50 most common words:", shared_data['word_counter'].most_common(50))
+
+        print("Subdomains found in uci.edu:")
+        for subdomain, count in sorted(shared_data['subdomain_counter'].items()):
+            print(f"{subdomain}, {count}")
+
     def run(self):
         while True:
             # add multiple threads to the frontier
             with self.frontier.lock:
                 tbd_url = self.frontier.get_tbd_url()
                 self.current_progress += 1
-                if self.current_progress % 100 == 0:
-                    print("------------------")
-                    print("Progress: ", self.current_progress)
-                    print("------------------")
                 if not tbd_url:
                     self.logger.info("Frontier is empty. Stopping Crawler.")
                     break
@@ -105,9 +111,10 @@ class Worker(Thread):
                 elif time.time() - self.frontier.domain_last_time[domain] < self.config.time_delay:
                     time.sleep(self.config.time_delay - (time.time() - self.frontier.domain_last_time[domain]))
                     self.frontier.domain_last_time[domain] = time.time()
+                print(f"Downloading {tbd_url}")
+                resp = download(tbd_url, self.config, self.logger)
+                self.process_page(tbd_url, resp.raw_response.content.decode('utf-8', 'ignore'))
 
-            print(f"Downloading {tbd_url}")
-            resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")
@@ -140,4 +147,9 @@ class Worker(Thread):
             else:
                 self.logger.info(f"Skipping similar page for URL: {tbd_url}")
             self.frontier.mark_url_complete(tbd_url)
+            if self.current_progress % 100 == 0:
+                print("------------------")
+                print("Progress: ", self.current_progress)
+                print("------------------")
+                self.print_progress(self.shared_data)
             time.sleep(self.config.time_delay)
