@@ -113,7 +113,8 @@ class Worker(Thread):
                     self.frontier.domain_last_time[domain] = time.time()
                 print(f"Downloading {tbd_url}")
                 resp = download(tbd_url, self.config, self.logger)
-                self.process_page(tbd_url, resp.raw_response.content.decode('utf-8', 'ignore'))
+                if resp.raw_response != None:
+                    self.process_page(tbd_url, resp.raw_response.content.decode('utf-8', 'ignore'))
 
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
