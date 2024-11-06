@@ -3,12 +3,12 @@ from bs4 import BeautifulSoup
 import re
 
 def scraper(url, resp):
-    links = extract_next_links(url, resp)
-    valid_links = [link for link in links if is_valid(link)]
+    Resultlinks = extract_next_links(url, resp)
+    ValidLinks = [link for link in Resultlinks if is_valid(link)]
     with open("crawled_urls.txt", "a") as f:
-        for link in valid_links:
+        for link in ValidLinks:
             f.write(link + "\n")
-    return valid_links
+    return ValidLinks
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -22,7 +22,6 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     links = set()
     if resp.status != 200:
-        print(f"Failed to fetch {url} with status code: {resp.status}")
         return list()
 
     try:
@@ -30,7 +29,6 @@ def extract_next_links(url, resp):
 
         for link in soup.find_all('a', href=True):
             href = link['href']
-            # Resolve relative URLs
             abs_url = urldefrag(href)[0]
             links.add(abs_url)
     except Exception as e:

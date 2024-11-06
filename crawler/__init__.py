@@ -27,15 +27,6 @@ class Crawler(object):
             for worker in self.workers:
                 worker.start()
 
-            print(f"Unique pages found: {len(shared_data['unique_urls'])}")
-            print(
-                f"Longest page URL: {shared_data['longest_page']['url']} with {shared_data['longest_page']['word_count']} words.")
-            print("50 most common words:", shared_data['word_counter'].most_common(50))
-
-            print("Subdomains found in uci.edu:")
-            for subdomain, count in sorted(shared_data['subdomain_counter'].items()):
-                print(f"{subdomain}, {count}")
-
         except Exception as e:
             self.logger.error(f"Worker startup failed: {e}")
 

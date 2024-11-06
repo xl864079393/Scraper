@@ -12,11 +12,11 @@ class Worker(Thread):
     def __init__(self, worker_id, config, frontier, shared_data=None):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
         self.config = config
-        self.frontier = frontier
-        self.seen_hashes = set()
-        self.shared_data = shared_data
+        self.frontObj = frontier
+        self.hashIt = set()
+        self.SharedData = shared_data
         self.current_progress = 0
-        self.MAX_URL_SIZE = 1024 * 1024  # Example threshold
+        self.MAX_URL_SIZE = 1024 * 1024
         self.stop_words = {
             "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any",
             "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below",
@@ -42,115 +42,90 @@ class Worker(Thread):
         assert {getsource(scraper).find(req) for req in {"from urllib.request import", "import urllib.request"}} == {-1}, "Do not use urllib.request in scraper.py"
         super().__init__(daemon=True)
 
-    def hash_content(self, content):
+    def hashThecontent(self, content):
         hash_value = 0
         for char in content:
-            hash_value = (hash_value * 31 + ord(char)) % (2 ** 32)  # Using a large prime base
+            hash_value = (hash_value * 31 + ord(char)) % (2 ** 32)
         return hash_value
 
-    def Dead_Links(self, resp):
+    def NotUsedLinks(self, resp):
         if resp.status == 200:
             content_length = len(resp.raw_response.content)
-            if content_length == 0 or content_length < 100:  # Example threshold
+            if content_length == 0 or content_length < 100:
                 return True
         return False
 
-    def too_large(self, resp):
+    def isTooLarge(self, resp):
         if resp.status == 200:
             content_length = len(resp.raw_response.content)
             if content_length > self.MAX_URL_SIZE:
                 return True
         return False
 
-    def extract_words(self, content):
-        text = re.sub(r'<[^>]+>', '', content)  # Remove HTML tags
-        words = re.findall(r'\b\w+\b', text.lower())  # Extract words
+    def extractWords(self, content):
+        text = re.sub(r'<[^>]+>', '', content)
+        words = re.findall(r'\b\w+\b', text.lower())
         return [word for word in words if word not in self.stop_words]
 
-    def process_page(self, url, content):
+    def analyzeThepage(self, url, content):
         parsed_url = urlparse(url)
         unique_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
 
-        self.shared_data['unique_urls'].add(unique_url)
+        self.SharedData['unique_urls'].add(unique_url)
 
-        words = self.extract_words(content)
+        words = self.extractWords(content)
         word_count = len(words)
 
-        if word_count > self.shared_data['longest_page']['word_count']:
-            self.shared_data['longest_page']['url'] = unique_url
-            self.shared_data['longest_page']['word_count'] = word_count
+        if word_count > self.SharedData['longest_page']['word_count']:
+            self.SharedData['longest_page']['url'] = unique_url
+            self.SharedData['longest_page']['word_count'] = word_count
 
         if parsed_url.netloc.endswith("uci.edu"):
-            subdomain = parsed_url.netloc.split('.')[0]
-            self.shared_data['subdomain_counter'][subdomain] += 1
+            subd = parsed_url.netloc.split('.')[0]
+            self.SharedData['subdomain_counter'][subd] += 1
 
-        self.shared_data['word_counter'].update(words)
-
-    def print_progress(self, shared_data):
-        print(f"Unique pages found: {len(shared_data['unique_urls'])}")
-        print(
-            f"Longest page URL: {shared_data['longest_page']['url']} with {shared_data['longest_page']['word_count']} words.")
-        print("50 most common words:", shared_data['word_counter'].most_common(50))
-
-        print("Subdomains found in uci.edu:")
-        for subdomain, count in sorted(shared_data['subdomain_counter'].items()):
-            print(f"{subdomain}, {count}")
+        self.SharedData['word_counter'].update(words)
 
     def run(self):
         while True:
-            # add multiple threads to the frontier
-            with self.frontier.lock:
-                tbd_url = self.frontier.get_tbd_url()
+            with self.frontObj.lock:
+                tbd_url = self.frontObj.get_tbd_url()
                 self.current_progress += 1
                 if not tbd_url:
                     self.logger.info("Frontier is empty. Stopping Crawler.")
                     break
                 domain = urlparse(tbd_url).netloc
-                if domain not in self.frontier.domain_last_time:
-                    self.frontier.domain_last_time[domain] = time.time()
-                elif time.time() - self.frontier.domain_last_time[domain] < self.config.time_delay:
-                    time.sleep(self.config.time_delay - (time.time() - self.frontier.domain_last_time[domain]))
-                    self.frontier.domain_last_time[domain] = time.time()
-                print(f"Downloading {tbd_url}")
+                if domain not in self.frontObj.domain_last_time:
+                    self.frontObj.domain_last_time[domain] = time.time()
+                elif time.time() - self.frontObj.domain_last_time[domain] < self.config.time_delay:
+                    time.sleep(self.config.time_delay - (time.time() - self.frontObj.domain_last_time[domain]))
+                    self.frontObj.domain_last_time[domain] = time.time()
                 resp = download(tbd_url, self.config, self.logger)
                 if resp.raw_response != None:
-                    self.process_page(tbd_url, resp.raw_response.content.decode('utf-8', 'ignore'))
+                    self.analyzeThepage(tbd_url, resp.raw_response.content.decode('utf-8', 'ignore'))
 
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")
 
-            # Check if the URL is dead(Empty content or content length less than 100)
-            if self.Dead_Links(resp):
-                self.logger.warning(f"Dead URL detected: {tbd_url}")
-                self.frontier.mark_url_complete(tbd_url)
+            if self.NotUsedLinks(resp):
+                self.frontObj.mark_url_complete(tbd_url)
                 continue
 
-            # Check if the URL is too large
-            if self.too_large(resp):
-                self.logger.warning(f"URL too large: {tbd_url}")
-                self.frontier.mark_url_complete(tbd_url)
+            if self.isTooLarge(resp):
+                self.frontObj.mark_url_complete(tbd_url)
                 continue
 
             if resp.raw_response is None:
-                self.logger.error(f"Failed to fetch {tbd_url}")
-                self.frontier.mark_url_complete(tbd_url)
+                self.frontObj.mark_url_complete(tbd_url)
                 continue
 
             scraped_urls = scraper.scraper(tbd_url, resp)
 
-            # Check if the URL is similar to a previously seen page
-            content_hash = self.hash_content(resp.raw_response.content.decode('utf-8', 'ignore'))
-            if content_hash not in self.seen_hashes:
-                self.seen_hashes.add(content_hash)
+            hashResult = self.hashThecontent(resp.raw_response.content.decode('utf-8', 'ignore'))
+            if hashResult not in self.hashIt:
+                self.hashIt.add(hashResult)
                 for scraped_url in scraped_urls:
-                    self.frontier.add_url(scraped_url)
-            else:
-                self.logger.info(f"Skipping similar page for URL: {tbd_url}")
-            self.frontier.mark_url_complete(tbd_url)
-            if self.current_progress % 100 == 0:
-                print("------------------")
-                print("Progress: ", self.current_progress)
-                print("------------------")
-                self.print_progress(self.shared_data)
+                    self.frontObj.add_url(scraped_url)
+            self.frontObj.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)
