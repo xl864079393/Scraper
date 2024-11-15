@@ -1,0 +1,2 @@
+banana: Posting(Document ID: 1, TF: 1, Positions: [1], Doc Length: 4)
+banana: Posting(Document ID: 2, TF: 1, Positions: [3], Doc Length: 4)
