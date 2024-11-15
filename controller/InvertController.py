@@ -11,25 +11,24 @@ def get_postings(inverted_index, term):
 
 
 
-# inverted_index = InvertedIdx.InvertedIndex()
-#
-# doc1 = 1  # 文档ID
-# tokens1 = ["apple", "banana", "apple", "apple"]
-# doc_length1 = len(tokens1)  # 计算文档长度（单词数）
-#
-# doc2 = 2  # 文档ID
-# tokens2 = ["apple", "orange", "apple", "banana"]
-# doc_length2 = len(tokens2)
-#
-# # 添加文档到倒排索引
-# inverted_index.add_document(doc1, tokens1, doc_length1)
-# inverted_index.add_document(doc2, tokens2, doc_length2)
-#
-# # 查询某个词项的倒排列表（已经进行差分编码）
-# postings_apple = inverted_index.get_postings("apple")
-# postings_banana = inverted_index.get_postings("banana")
-#
-# print("Postings for 'apple':", postings_apple)
-# print("Postings for 'banana':", postings_banana)
+inverted = InvertedIdx.InvertedIndex()
+
+doc1 = 1  # 文档ID
+tokens1 = ["apple", "banana", "apple", "apple"]
+doc_length1 = len(tokens1)  # 计算文档长度（单词数）
+
+doc2 = 2  # 文档ID
+tokens2 = ["apple", "orange", "apple", "banana"]
+doc_length2 = len(tokens2)
+
+# 添加文档到倒排索引
+inverted.add_document(doc1, tokens1, doc_length1)
+inverted.add_document(doc2, tokens2, doc_length2)
+
+terms = inverted.get_all_terms()
+
+for term in terms:
+    postings = inverted.get_raw_postings(term)
+    print(postings)
 
 

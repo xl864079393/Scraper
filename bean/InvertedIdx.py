@@ -48,3 +48,10 @@ class InvertedIndex:
                 result.append(posting)
             return result
         return []
+
+    def get_all_terms(self):
+        return self.trie.get_all_terms()
+
+    def get_raw_postings(self, term):
+        postings, _ = self.trie.search(term)
+        return {term: postings}

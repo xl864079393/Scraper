@@ -53,3 +53,15 @@ class Trie:
         node.index.append(posting)
 
         node.index, node.doc_encoder = self._delta_encode_postings(node.index)
+
+    # return all terms with their postings
+    def get_all_terms(self):
+        def _get_terms(node, term, terms):
+            if node.is_end_of_word:
+                terms[term] = node.index
+            for char, child_node in node.children.items():
+                _get_terms(child_node, term + char, terms)
+
+        terms = {}
+        _get_terms(self.root, '', terms)
+        return terms
