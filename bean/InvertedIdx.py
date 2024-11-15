@@ -7,6 +7,7 @@ class InvertedIndex:
     def __init__(self):
         self.trie = Trie()
         self.encoder = DeltaEncoder()
+        self.total_doc = 0
 
     # def _serialize(self, node):
     #     """将trie节点数据序列化为可存储的字典格式"""
@@ -26,6 +27,8 @@ class InvertedIndex:
     def add_document(self, document_id, tokens, doc_length):
         term_frequency = {}
         positions = {}
+        self.total_doc += 1
+        print(document_id)
 
         for index, token in enumerate(tokens):
             if token not in term_frequency:
@@ -53,5 +56,7 @@ class InvertedIndex:
         return self.trie.get_all_terms()
 
     def get_raw_postings(self, term):
-        postings, _ = self.trie.search(term)
+        postings, doc_encode = self.trie.search(term)
+        for i in range(len(postings)):
+            postings[i] = (doc_encode[i], postings[i][1], [postings[i][2][0],postings[i][2][-1]], postings[i][3])
         return {term: postings}

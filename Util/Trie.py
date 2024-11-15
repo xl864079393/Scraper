@@ -33,12 +33,12 @@ class Trie:
     def _delta_encode_postings(self, postings):
         if not postings:
             return [], []
-
         doc_encoder = self.encoder.encode([p[0] for p in postings])  # 对文档ID差分编码
         encoded_postings = [
-            (doc_encoder[i], postings[i][1], postings[i][2], postings[i][3])
+            (postings[i][0], postings[i][1], postings[i][2], postings[i][3])
             for i in range(len(postings))
         ]
+
         return encoded_postings, doc_encoder
 
     def add_posting(self, term, document_id, term_frequency, positions, doc_length):
@@ -51,7 +51,6 @@ class Trie:
 
         node.is_end_of_word = True
         node.index.append(posting)
-
         node.index, node.doc_encoder = self._delta_encode_postings(node.index)
 
     # return all terms with their postings

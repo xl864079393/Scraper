@@ -1,4 +1,5 @@
 from bean import InvertedIdx
+from controller import Token
 
 def start_invert_index(doc_ids, tokens, doc_lengths):
     inverted_index = InvertedIdx.InvertedIndex()
@@ -9,26 +10,29 @@ def start_invert_index(doc_ids, tokens, doc_lengths):
 def get_postings(inverted_index, term):
     return inverted_index.get_postings(term)
 
+def start(folder_path, inverted_index):
+    Token.build_from_json_files(folder_path, inverted_index)
 
 
-inverted = InvertedIdx.InvertedIndex()
 
-doc1 = 1  # 文档ID
-tokens1 = ["apple", "banana", "apple", "apple"]
-doc_length1 = len(tokens1)  # 计算文档长度（单词数）
-
-doc2 = 2  # 文档ID
-tokens2 = ["apple", "orange", "apple", "banana"]
-doc_length2 = len(tokens2)
-
-# 添加文档到倒排索引
-inverted.add_document(doc1, tokens1, doc_length1)
-inverted.add_document(doc2, tokens2, doc_length2)
-
-terms = inverted.get_all_terms()
-
-for term in terms:
-    postings = inverted.get_raw_postings(term)
-    print(postings)
+# inverted = InvertedIdx.InvertedIndex()
+#
+# doc1 = 1  # 文档ID
+# tokens1 = ["apple", "banana", "apple", "apple"]
+# doc_length1 = len(tokens1)  # 计算文档长度（单词数）
+#
+# doc2 = 2  # 文档ID
+# tokens2 = ["apple", "orange", "apple", "banana"]
+# doc_length2 = len(tokens2)
+#
+# # 添加文档到倒排索引
+# inverted.add_document(doc1, tokens1, doc_length1)
+# inverted.add_document(doc2, tokens2, doc_length2)
+#
+# terms = inverted.get_all_terms()
+#
+# for term in terms:
+#     postings = inverted.get_raw_postings(term)
+#     print(postings)
 
 
