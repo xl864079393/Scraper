@@ -57,9 +57,13 @@ def build_from_json_files(folder_path, inverted_index):
     num = 1
     for folder_name in os.listdir(folder_path):
         for file_name in os.listdir(os.path.join(folder_path, folder_name)):
+            if num % 150 == 0:
+                print("Initiating all data")
+                inverted_index.Init_all_data()
             if file_name.endswith(".json"):
                 file_path = os.path.join(folder_path,folder_name, file_name)
                 with open(file_path, "r", encoding = "utf-8") as file:
                     json_content = file.read()
                     inverted_index.add_document(*process_document(num, json_content))
                     num += 1
+    inverted_index.Init_all_data()

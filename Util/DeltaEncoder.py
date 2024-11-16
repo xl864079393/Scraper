@@ -20,3 +20,13 @@ class DeltaEncoder:
             decoded_data.append(decoded_data[-1] + encoded_data[i])  # 累加差值得到原始数据
 
         return decoded_data
+
+    # def encode_postings(self, postings):
+    #     if not postings:
+    #         return [], []
+    #     doc_encoder = self.encode([p[0] for p in postings])
+    #     encoded_postings = [
+    #         (postings[i][0], postings[i][1], postings[i][2], postings[i][3])
+    #         for i in range(len(postings))
+    #     ]
+    #     return encoded_postings, doc_encoder

@@ -1,6 +1,7 @@
 from Util.Trie import Trie
 from Util.DeltaEncoder import DeltaEncoder
 from bean.Posting import Posting
+from collections import defaultdict
 import json
 
 class InvertedIndex:
@@ -8,6 +9,7 @@ class InvertedIndex:
         self.trie = Trie()
         self.encoder = DeltaEncoder()
         self.total_doc = 0
+        self.target_dict = defaultdict()
 
     # def _serialize(self, node):
     #     """将trie节点数据序列化为可存储的字典格式"""
@@ -39,7 +41,7 @@ class InvertedIndex:
 
         for term, frequency in term_frequency.items():
             sorted_positions = sorted(positions[term])
-            self.trie.add_posting(term, document_id, frequency, sorted_positions, doc_length)
+            self.trie.add_posting(term, document_id, frequency, [sorted_positions[0],sorted_positions[-1]], doc_length)
 
     def get_postings(self, term):
         postings, doc_encoder = self.trie.search(term)
@@ -60,3 +62,8 @@ class InvertedIndex:
         for i in range(len(postings)):
             postings[i] = (doc_encode[i], postings[i][1], [postings[i][2][0],postings[i][2][-1]], postings[i][3])
         return {term: postings}
+
+    def Init_all_data(self):
+        self.target_dict = self.trie.store_all_terms(self.target_dict)
+        self.trie.clear()
+        return self.target_dict

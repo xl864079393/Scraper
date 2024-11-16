@@ -64,3 +64,16 @@ class Trie:
         terms = {}
         _get_terms(self.root, '', terms)
         return terms
+
+    # store all terms with their postings to a dictionary
+    def store_all_terms(self, target_dict):
+        terms = self.get_all_terms()
+        for term, postings in terms.items():
+            target_dict[term] = postings
+        return terms
+
+    # clear all terms
+    def clear(self):
+        self.root = TrieNode()
+        self.encoder = DeltaEncoder()
+        return self.root
