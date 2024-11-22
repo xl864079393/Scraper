@@ -1,32 +1,18 @@
-from Util.Trie import Trie
+from Util.Container import Container
 from Util.DeltaEncoder import DeltaEncoder
 from bean.Posting import Posting
 from collections import defaultdict
+import os
+import gc
 import json
 
 class InvertedIndex:
     def __init__(self):
-        self.trie = Trie()
+        self.container = Container()
         self.encoder = DeltaEncoder()
         self.total_doc = 0
-        self.target_dict = defaultdict()
 
-    # def _serialize(self, node):
-    #     """将trie节点数据序列化为可存储的字典格式"""
-    #     if not node:
-    #         return None
-    #     node_data = {}
-    #     for char, child_node in node.children.items():
-    #         node_data[char] = self._serialize(child_node)
-    #     return {'children': node_data, 'is_end_of_word': node.is_end_of_word}
-    #
-    # def backup_to_file(self, filename = "inverted_index_backup.json"):
-    #     """Backup the inverted index to a file in a compact format."""
-    #     with open(filename, 'w') as f:
-    #         serialized_data = self._serialize(self.trie.root)
-    #         f.write(json.dumps(serialized_data))
-
-    def add_document(self, document_id, tokens, doc_length):
+    def add_document(self, document_id, tokens):
         term_frequency = {}
         positions = {}
         self.total_doc += 1
@@ -41,29 +27,31 @@ class InvertedIndex:
 
         for term, frequency in term_frequency.items():
             sorted_positions = sorted(positions[term])
-            self.trie.add_posting(term, document_id, frequency, [sorted_positions[0],sorted_positions[-1]], doc_length)
+            self.container.add_posting(term, document_id, frequency, [sorted_positions[0], sorted_positions[-1]])
 
     def get_postings(self, term):
-        postings, doc_encoder = self.trie.search(term)
-        result = []
-        if postings is not None:
-            doc_decoder = self.encoder.decode(doc_encoder)
-            for i in range(len(postings)):
-                posting = Posting(doc_decoder[i], postings[i][1], self.encoder.decode(postings[i][2]), postings[i][3])
-                result.append(posting)
-            return result
-        return []
+        return self.container.search(term)
 
     def get_all_terms(self):
-        return self.trie.get_all_terms()
+        return self.container.get_all_terms()
 
-    def get_raw_postings(self, term):
-        postings, doc_encode = self.trie.search(term)
-        for i in range(len(postings)):
-            postings[i] = (doc_encode[i], postings[i][1], [postings[i][2][0],postings[i][2][-1]], postings[i][3])
-        return {term: postings}
+    def Init_all_data(self, target_file="temp/target.json"):
+        if os.path.exists(target_file):
+            with open(target_file, 'r', encoding="utf-8") as f:
+                try:
+                    existData = defaultdict(list, json.load(f))
+                except json.JSONDecodeError:
+                    existData = defaultdict(list)
+        else:
+            existData = defaultdict(list)
 
-    def Init_all_data(self):
-        self.target_dict = self.trie.store_all_terms(self.target_dict)
-        self.trie.clear()
-        return self.target_dict
+        currentData = self.get_all_terms()
+
+        for terms, postings in currentData.items():
+            existData[terms].extend(postings)
+        self.container.clear()
+        with open(target_file, 'w', encoding="utf-8") as f:
+            json.dump(dict(existData), f, ensure_ascii=False)
+        print("Total doc: ", self.total_doc)
+        print("Total term: ", len(existData))
+        gc.collect()
