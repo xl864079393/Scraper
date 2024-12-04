@@ -10,6 +10,7 @@ def start_invert_index(doc_ids, tokens):
 def get_postings(inverted_index, term):
     return inverted_index.get_postings(term)
 
+# 调用Token.build_from_json_files 开始构建倒排索引
 def start(folder_path, inverted_index):
     Token.build_from_json_files(folder_path, inverted_index)
     # create bitmap
