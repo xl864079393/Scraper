@@ -8,24 +8,38 @@ import gc
 
 # tokenization and stemming
 def process_document(document_id, json_content):
-
     ps = PorterStemmer()
 
     def extract_and_stem(text):
+        # Tokenize the text and convert it to lowercase
         tokens = re.findall(r'\b\w+\b', text.lower())
+        # Stem the tokens
         return [ps.stem(token) for token in tokens]
+
+    def generate_trigrams(tokens):
+        # Create trigrams (sequences of three consecutive words)
+        trigrams = [tuple(tokens[i:i+3]) for i in range(len(tokens) - 2)]
+        return trigrams
 
     if not isinstance(json_content, dict) or json_content["content"] is None:
         raise ValueError("Input JSON must contain a 'content' field.")
 
     content = json_content["content"]
-
     soup = BeautifulSoup(content, "html.parser")
-
     body_text = soup.get_text()
+
+    # Extract and stem the tokens
     tokens = extract_and_stem(body_text)
 
-    return document_id, tokens
+    # Generate trigrams from tokens
+    trigrams = generate_trigrams(tokens)
+
+    # Combine unigrams and trigrams
+    all_terms = tokens + [' '.join(trigram) for trigram in trigrams]
+
+    # Return both unigrams and trigrams for indexing/search
+    return document_id, all_terms
+
 
 # 被InvertController.start调用
 # 遍历文件夹中的所有json文件，将每个文件的内容提取出来进行 process_document()，然后调用InvertedIndex.add_document方法

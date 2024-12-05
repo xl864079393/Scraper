@@ -68,10 +68,12 @@ def search():
 
         # delete any non-alphanumeric and non-space characters
         terms = [re.sub(r'[^a-zA-Z0-9\s]', '', term) for term in terms]
+        trigrams = [tuple(terms[i:i + 3]) for i in range(len(terms) - 2)]
         terms = [ps.stem(term) for term in terms]
+        all_terms = terms + [' '.join(trigram) for trigram in trigrams]
 
         # store the doc_numbers and term_frequency of each term in term_dict
-        for term in terms:
+        for term in all_terms:
             doc_and_tf = search_term(data, term)
             if isinstance(doc_and_tf, str):
                 print(doc_and_tf)
@@ -80,7 +82,7 @@ def search():
 
 
         # for every term in term_dict, output the intersection of their doc_numbers using bitmap
-        terms_bitmap = [bitmap[term] for term in terms if term in bitmap]
+        terms_bitmap = [bitmap[term] for term in all_terms if term in bitmap]
         intersection_bitmap = reduce(lambda x, y: x & y, terms_bitmap if terms_bitmap else [pyroaring.BitMap()])
 
         # 计算 TF-IDF 分数并排序
