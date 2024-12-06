@@ -4,7 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from nltk.stem import PorterStemmer
 import gc
-
+import time
 
 
 # tokenization and stemming
@@ -66,8 +66,14 @@ def build_from_json_files(folder_path, inverted_index):
             inverted_index.add_document(*document)
 
         if num % 3000 == 0:
-            inverted_index.save_into_batch()
-            gc.collect()
+            if len(inverted_index.container.dict) > 2000000:
+                print("Total term:" + str(len(inverted_index.container.dict)))
+                start_time = time.time()
+                inverted_index.save_into_batch()
+                end_time = time.time()
+                print(f"Total Time: {end_time - start_time}")
+                gc.collect()
+
 
         docid_dict[num] = json_content["url"]
         num += 1
