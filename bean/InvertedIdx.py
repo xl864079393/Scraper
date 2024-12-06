@@ -1,16 +1,13 @@
 from Util.Container import Container
 from Util.DeltaEncoder import DeltaEncoder
-from bean.Posting import Posting
-from collections import defaultdict
-import os
-import gc
-import json
+import Util.index_batch as ib
 
 class InvertedIndex:
     def __init__(self):
         self.container = Container()
         self.encoder = DeltaEncoder()
         self.total_doc = 0
+        self.batch_id = 0
 
     def add_document(self, document_id, tokens):
         term_frequency = {}
@@ -35,23 +32,9 @@ class InvertedIndex:
     def get_all_terms(self):
         return self.container.get_all_terms()
 
-    def Init_all_data(self, target_file="temp/target.json"):
-        if os.path.exists(target_file):
-            with open(target_file, 'r', encoding="utf-8") as f:
-                try:
-                    existData = defaultdict(list, json.load(f))
-                except json.JSONDecodeError:
-                    existData = defaultdict(list)
-        else:
-            existData = defaultdict(list)
-
-        currentData = self.get_all_terms()
-
-        for terms, postings in currentData.items():
-            existData[terms].extend(postings)
+    def save_into_batch(self):
+        self.batch_id += 1
+        inverted_index_batch = self.container.get_all_terms()
+        bookkeeping_file = "bookkeeping.txt"
+        ib.process_and_save_batches(inverted_index_batch, bookkeeping_file, self.batch_id)
         self.container.clear()
-        with open(target_file, 'w', encoding="utf-8") as f:
-            json.dump(dict(existData), f, ensure_ascii=False)
-        print("Total doc: ", self.total_doc)
-        print("Total term: ", len(existData))
-        gc.collect()

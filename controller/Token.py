@@ -6,6 +6,7 @@ from nltk.stem import PorterStemmer
 import gc
 
 
+
 # tokenization and stemming
 def process_document(document_id, json_content):
     ps = PorterStemmer()
@@ -65,6 +66,7 @@ def build_from_json_files(folder_path, inverted_index):
             inverted_index.add_document(*document)
 
         if num % 3000 == 0:
+            inverted_index.save_into_batch()
             gc.collect()
 
         docid_dict[num] = json_content["url"]
