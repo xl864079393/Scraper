@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from nltk.stem import PorterStemmer
 import gc
 import time
+import pickle
 
 
 # tokenization and stemming
@@ -45,6 +46,7 @@ def process_document(document_id, json_content):
 # 被InvertController.start调用
 # 遍历文件夹中的所有json文件，将每个文件的内容提取出来进行 process_document()，然后调用InvertedIndex.add_document方法
 def build_from_json_files(folder_path, inverted_index):
+    index_bookkeeping = {}
     docid_dict = {}
     num = 1
     all_files = [
@@ -69,7 +71,7 @@ def build_from_json_files(folder_path, inverted_index):
             if len(inverted_index.container.dict) > 2000000:
                 print("Total term:" + str(len(inverted_index.container.dict)))
                 start_time = time.time()
-                inverted_index.save_into_batch()
+                inverted_index.save_into_batch(index_bookkeeping)
                 end_time = time.time()
                 print(f"Total Time: {end_time - start_time}")
                 gc.collect()
@@ -83,7 +85,16 @@ def build_from_json_files(folder_path, inverted_index):
 
     print("Total term:" + str(len(inverted_index.container.dict)))
     start_time = time.time()
-    inverted_index.save_into_batch()
+    inverted_index.save_into_batch(index_bookkeeping)
     end_time = time.time()
     print(f"Total Time: {end_time - start_time}")
     gc.collect()
+
+    try:
+        with open("index_bookkeeping.pkl", "wb") as f:
+            pickle.dump(index_bookkeeping, f)
+    except Exception as e:
+        print(e)
+        print("Error saving bookkeeping file.")
+
+
