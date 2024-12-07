@@ -35,6 +35,6 @@ class InvertedIndex:
     def save_into_batch(self):
         self.batch_id += 1
         inverted_index_batch = self.container.get_all_terms()
-        bookkeeping_file = "bookkeeping.txt"
+        bookkeeping_file = "bookkeeping.pkl"
         ib.process_and_save_batches(inverted_index_batch, bookkeeping_file, self.batch_id)
         self.container.clear()

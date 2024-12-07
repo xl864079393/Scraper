@@ -80,3 +80,10 @@ def build_from_json_files(folder_path, inverted_index):
 
     with open("docid_dict.json", "w", encoding="utf-8") as f:
         json.dump(docid_dict, f, ensure_ascii=False)
+
+    print("Total term:" + str(len(inverted_index.container.dict)))
+    start_time = time.time()
+    inverted_index.save_into_batch()
+    end_time = time.time()
+    print(f"Total Time: {end_time - start_time}")
+    gc.collect()

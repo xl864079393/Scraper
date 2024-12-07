@@ -29,11 +29,9 @@ def save_inverted_index_batch(inverted_index_file, batch):
     return term_offsets
 
 # 更新书籍管理文件，记录每个术语在某个文件中的偏移量
-def update_bookkeeping_file(bookkeeping_file, term, file_name, start_pos, end_pos):
+def update_bookkeeping_file(bf, term, file_name, start_pos, end_pos):
     entry = (term, file_name, start_pos, end_pos)  # 定义记录条目
-
-    with open(bookkeeping_file, 'ab') as bf:  # 以二进制追加模式打开
-        pickle.dump(entry, bf)  # 使用 pickle 序列化条目
+    pickle.dump(entry, bf)  # 将记录条目写入书籍管理文件（以二进制格式）
 
 # 批次处理函数：处理多个倒排索引批次并更新管理文件
 def process_and_save_batches(inverted_index_batche, bookkeeping_file, batch_id):
@@ -47,30 +45,74 @@ def process_and_save_batches(inverted_index_batche, bookkeeping_file, batch_id):
 
     # 更新书籍管理文件
     start_time = time.time()
-    for term, (start_pos, end_pos) in term_offsets.items():
-        update_bookkeeping_file(bookkeeping_file, term, inverted_index_file, start_pos, end_pos)
+    with open(bookkeeping_file, 'ab') as bf:
+        for term, (start_pos, end_pos) in term_offsets.items():
+            update_bookkeeping_file(bf, term, inverted_index_file, start_pos, end_pos)
     end_time = time.time()
     print(f"Time to update bookkeeping file for batch {batch_id}: {end_time - start_time}")
 
 
 def load_inverted_index_for_term(term, bookkeeping_file):
-    inverted_index = []
+    """
+    根据术语从书籍管理文件中查找偏移量，并加载倒排索引。
 
-    # 打开书籍管理文件查找术语的所有记录
-    with open(bookkeeping_file, 'r') as bf:
-        for line in bf:
-            term_in_file, file_name, start_pos, end_pos = line.strip().split()
+    :param term: str，目标术语
+    :param bookkeeping_file: str，书籍管理文件路径（二进制格式）
+    :return: list，包含术语在所有批次中的倒排索引条目
+    """
+    inverted_index = {}  # 用于存储与术语相关的倒排索引
+    bookkeeping_data = []
+
+    try:
+        # 打开书籍管理文件（以二进制模式读取）
+        start_time = time.time()
+        with open(bookkeeping_file, 'rb') as bf:
+            while True:
+                try:
+                    data = pickle.load(bf)  # 读取书籍管理数据（期望为元组）
+                    bookkeeping_data.append(data)
+                except EOFError:
+                    break
+        end_time = time.time()
+        print(f"Time to load bookkeeping file: {end_time - start_time}")
+
+        # # 假设 `bookkeeping_data` 是一个列表，每项为 (term, file_name, start_pos, end_pos)
+        start_time = time.time()
+        for term_in_file, file_name, start_pos, end_pos in bookkeeping_data:
             if term_in_file == term:
                 start_pos, end_pos = int(start_pos), int(end_pos)
 
+                print(f"Term: {term}, File: {file_name}, Start: {start_pos}, End: {end_pos}")
                 # 根据偏移量读取倒排索引文件
-                with open("sampledata/"+file_name, 'rb') as f:
+                file_path = f"../{file_name}"
+                with open(file_path, 'rb') as f:
                     f.seek(start_pos)
                     inverted_index_batch = pickle.load(f)
-                    inverted_index += inverted_index_batch.get(term, [])
+
+                    # 合并当前批次中与术语相关的倒排索引
+                    for term, postings in inverted_index_batch.items():
+                        if term in inverted_index:
+                            inverted_index[term].extend(postings)
+                        else:
+                            inverted_index[term] = postings
+        end_time = time.time()
+        print(f"Time to load index files: {end_time - start_time}")
+
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+    except Exception as e:
+        print(f"Error loading bookkeeping file or index files: {e}")
 
     return inverted_index
 
-bookkeeping_files = "sampledata/bookkeeping.txt"
-lopes_index = load_inverted_index_for_term("lopes", bookkeeping_files)
-print(lopes_index)
+# def terms_from_batch(terms):
+#     try:
+#         with open("bookkeeping.pkl", 'rb') as bf:
+
+
+bookkeeping_files = "../bookkeeping.pkl"
+lopes_index = load_inverted_index_for_term("lope", bookkeeping_files)
+
+
+
+
