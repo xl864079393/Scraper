@@ -68,7 +68,7 @@ def build_from_json_files(folder_path, inverted_index):
             inverted_index.add_document(*document)
 
         if num % 3000 == 0:
-            if len(inverted_index.container.dict) > 2000000:
+            if len(inverted_index.container.dict) > 4000000:
                 print("Total term:" + str(len(inverted_index.container.dict)))
                 start_time = time.time()
                 inverted_index.save_into_batch(index_bookkeeping)
