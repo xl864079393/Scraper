@@ -6,10 +6,12 @@ from nltk.stem import PorterStemmer
 import gc
 import time
 import pickle
+import networkx as nx
+import gzip
 
 
 # tokenization and stemming
-def process_document(document_id, json_content):
+def process_document(document_id, json_content, link_graph, inverted_docid_dict):
     ps = PorterStemmer()
 
     def extract_and_stem(text):
@@ -22,6 +24,11 @@ def process_document(document_id, json_content):
         # Create trigrams (sequences of three consecutive words)
         trigrams = [tuple(tokens[i:i+3]) for i in range(len(tokens) - 2)]
         return trigrams
+
+    def extract_links(soup):
+        # Extract all hyperlinks from the document
+        links = [a['href'] for a in soup.find_all('a', href = True)]
+        return links
 
     if not isinstance(json_content, dict) or json_content["content"] is None:
         raise ValueError("Input JSON must contain a 'content' field.")
@@ -36,6 +43,14 @@ def process_document(document_id, json_content):
     # Generate trigrams from tokens
     trigrams = generate_trigrams(tokens)
 
+    # extract links
+    links = extract_links(soup)
+
+    # add links to link graph
+    for link in links:
+        if link in inverted_docid_dict:
+            link_graph.add_edge(document_id, inverted_docid_dict[link])
+
     # Combine unigrams and trigrams
     all_terms = tokens + [' '.join(trigram) for trigram in trigrams]
 
@@ -47,7 +62,9 @@ def process_document(document_id, json_content):
 # 遍历文件夹中的所有json文件，将每个文件的内容提取出来进行 process_document()，然后调用InvertedIndex.add_document方法
 def build_from_json_files(folder_path, inverted_index):
     index_bookkeeping = {}
+    link_graph = nx.DiGraph()
     docid_dict = {}
+    inverted_docid_dict = {}
     num = 1
     all_files = [
         os.path.join(folder_path, folder_name, file_name)
@@ -56,13 +73,26 @@ def build_from_json_files(folder_path, inverted_index):
         if file_name.endswith(".json")
     ]
 
+    start_time = time.time()
+    for file_path in all_files:
+        with open(file_path, "r", encoding = "utf-8") as file:
+            json_content = file.read()
+        json_content = json.loads(json_content)
+        docid_dict[num] = json_content["url"]
+        inverted_docid_dict[json_content["url"]] = num
+        num+=1
+        print(num)
+    end_time = time.time()
+    print(f"Time to read docid_dict: {end_time - start_time}")
+
+    num = 1
     for file_path in all_files:
         with open(file_path, "r", encoding = "utf-8") as file:
             json_content = file.read()
 
         json_content = json.loads(json_content)
 
-        document = process_document(num, json_content)
+        document = process_document(num, json_content, link_graph, inverted_docid_dict)
 
         if document:
             inverted_index.add_document(*document)
@@ -75,24 +105,20 @@ def build_from_json_files(folder_path, inverted_index):
                 end_time = time.time()
                 print(f"Total Time: {end_time - start_time}")
                 gc.collect()
-
-
-        docid_dict[num] = json_content["url"]
         num += 1
 
     with open("docid_dict.json", "w", encoding="utf-8") as f:
         json.dump(docid_dict, f, ensure_ascii=False)
 
-    print("Total term:" + str(len(inverted_index.container.dict)))
-    start_time = time.time()
     inverted_index.save_into_batch(index_bookkeeping)
-    end_time = time.time()
-    print(f"Total Time: {end_time - start_time}")
     gc.collect()
 
     try:
-        with open("index_bookkeeping.pkl", "wb") as f:
+        with gzip.open("index_bookkeeping.pkl", "wb") as f:
             pickle.dump(index_bookkeeping, f)
+
+        with gzip.open("link_graph.pkl", "wb") as f:
+            pickle.dump(link_graph, f)
     except Exception as e:
         print(e)
         print("Error saving bookkeeping file.")

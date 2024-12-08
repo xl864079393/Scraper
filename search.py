@@ -7,6 +7,7 @@ import pickle
 import os
 import pyroaring
 from functools import reduce
+import gzip
 
 def load_json_file(file_path):
     with open(file_path, "r", encoding="utf-8") as file:
@@ -55,7 +56,6 @@ def search():
     len_docid = len(docid_dict)
     ps = PorterStemmer()
     bitmaps = {}
-    
     while True:
         # get the term to search
         inputs = input("Enter the term to search: ")

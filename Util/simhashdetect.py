@@ -1,4 +1,5 @@
-# import hashlib
+# import hashli
+
 
 # def compute_simhash(text, hash_bits=64):
 #     tokens = text.split()
@@ -6,7 +7,7 @@
 
 #     for token in tokens:
 #         token_hash = int(hashlib.md5(token.encode('utf-8')).hexdigest(), 16)
-        
+
 #         for i in range(hash_bits):
 #             bit = (token_hash >> i) & 1
 #             hash_vector[i] += 1 if bit == 1 else -1
@@ -49,7 +50,7 @@
 
 #     for token in tokens:
 #         token_hash = int(hashlib.md5(token.encode('utf-8')).hexdigest(), 16)
-        
+
 #         for i in range(hash_bits):
 #             bit = (token_hash >> i) & 1
 #             hash_vector[i] += 1 if bit == 1 else -1
@@ -109,7 +110,7 @@ def compute_simhash(items, hash_bits=64):
 
     for item in items:
         token_hash = int(hashlib.md5(item.encode('utf-8')).hexdigest(), 16)
-        
+
         for i in range(hash_bits):
             bit = (token_hash >> i) & 1
             hash_vector[i] += 1 if bit == 1 else -1
@@ -130,14 +131,14 @@ def is_duplicate(new_list, similarity=0.99999, hash_bits=64):
     """Check if the new list is similar to any stored lists based on similarity percentage."""
     global stored_hashes
     new_hash = compute_simhash(new_list, hash_bits)
-    
+
     # Calculate the threshold for the Hamming distance
     max_allowed_differences = int(hash_bits * (1 - similarity))
-    
+
     for stored_hash in stored_hashes:
         if hamming_distance(new_hash, stored_hash) <= max_allowed_differences:
             return True  # Similar pair found
-    
+
     # If no similar pairs, store the new hash and return False
     stored_hashes.append(new_hash)
     return False
