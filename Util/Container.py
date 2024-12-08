@@ -1,6 +1,5 @@
 from Util.DeltaEncoder import DeltaEncoder
 from collections import defaultdict
-from Util.rle_encode import rle_encode, rle_decode
 from bitarray import bitarray
 
 
@@ -44,9 +43,9 @@ class Container:
         self.insert(term, posting)
         #node.index, node.doc_encoder = self._delta_encode_postings(node.index)
 
-    def rle_encode_all_bitmap(self):
-        for key in self.bitmap.keys():
-            self.bitmap[key] = rle_encode(self.bitmap[key])
+    # def rle_encode_all_bitmap(self):
+    #     for key in self.bitmap.keys():
+    #         self.bitmap[key] = rle_encode(self.bitmap[key])
 
 
     def get_all_terms(self):
