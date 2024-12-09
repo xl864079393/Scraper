@@ -8,20 +8,12 @@ import os
 import pyroaring
 from functools import reduce
 import gzip
+import networkx as nx
 
 def load_json_file(file_path):
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
     return data
-
-def search_term(json_data, term):
-
-    if term not in json_data:
-        return f"The term '{term}' does not exist in the data."
-
-    results = json_data[term]
-    doc_and_tf = {result[0]: result[1] for result in results}
-    return doc_and_tf
 
 def open_file(dir_path):
     """
@@ -47,10 +39,14 @@ def close_file(file_handlers):
         file_handler.close()
 
 
-def search():
+def search_for_test():
     # data = load_json_file(file_path)
     with open("index_bookkeeping.pkl", 'rb') as bf:
         term_positions = pickle.load(bf)
+    with gzip.open("link_graph.pkl", 'rb') as bf:
+        link_graph = pickle.load(bf)
+    page_rank_scores = nx.pagerank(link_graph)
+    hits_scores = nx.hits(link_graph)
     file_handlers = open_file("batches")
     docid_dict = load_json_file("docid_dict.json")
     len_docid = len(docid_dict)
@@ -87,8 +83,14 @@ def search():
 
         #
         # # 计算 TF-IDF 分数并排序
-        tf_idf_scores = scoresComputation.compute_tf_idf(len_docid, terms_postings, intersection_bitmap)
-        ranked_docs = sorted(tf_idf_scores.items(), key = lambda x: x[1], reverse = True)
+        scores = scoresComputation.compute_tf_idf(len_docid, terms_postings, intersection_bitmap)
+        # # 计算 HITS 和 PageRank 分数
+        scoresComputation.compute_HITS_PR(intersection_bitmap, page_rank_scores, hits_scores[0], scores)
+        # # 计算 Proximity Position 分
+        scoresComputation.compute_proximity_position(intersection_bitmap, terms_postings,5, scores)
+        # # 计算anchor分数
+        scoresComputation.compute_anchor(intersection_bitmap, terms_postings, scores)
+        ranked_docs = sorted(scores.items(), key = lambda x: x[1], reverse = True)
         end_time = time.time()
         print(f"Time taken: {end_time - start_time}")
 
@@ -99,17 +101,9 @@ def search():
             print(f"Score: {score}")
             print()
 
-
-        # get the file path of the intersection
-        # for doc_number in intersection_bitmap:
-        #     print(f"Document number: {doc_number}")
-        #     print(f"File path: {docid_dict[str(doc_number)]}")
-        #     print()
-        # print(len(intersection))
-
         terms_postings.clear()
     close_file(file_handlers)
 
 
 if __name__ == "__main__":
-    search()
+    search_for_test()

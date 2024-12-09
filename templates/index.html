@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Engine</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        form {
+            margin-bottom: 40px;
+        }
+        input[type="text"] {
+            width: 60%;
+            padding: 15px;
+            font-size: 20px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+        }
+        button {
+            margin-left: 10px;
+            padding: 15px 30px;
+            font-size: 20px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .query-text {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .results-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .result-item {
+            font-size: 18px;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .result-item a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .result-item a:hover {
+            text-decoration: underline;
+        }
+        .pagination {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .pagination a {
+            padding: 10px 15px;
+            color: #007bff;
+            text-decoration: none;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+        }
+        .pagination a.disabled {
+            color: #ccc;
+            border-color: #ccc;
+            pointer-events: none;
+        }
+        .pagination a:hover {
+            background-color: #0056b3;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Search Engine</h1>
+        <!-- 搜索框 -->
+        <form method="POST">
+            <input type="text" name="query" placeholder="Enter query..." value="{{ query }}">
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- 显示查询词 -->
+        {% if query %}
+            <p class="query-text">Your searching content：<strong>{{ query }}</strong></p>
+        {% endif %}
+
+        <!-- 搜索结果 -->
+        <div class="results-container">
+            {% if search_results %}
+                {% for docid, url, score in search_results %}
+                    <div class="result-item">
+                        <a href="{{ url }}" target="_blank">{{ url }}</a>
+                        <p>score：{{ score }}</p>
+                    </div>
+                {% endfor %}
+            {% elif query %}
+                <p>No result</p>
+            {% endif %}
+        </div>
+
+        <!-- 分页 -->
+        {% if query and total_pages > 1 %}
+            <div class="pagination">
+                <a href="?query={{ query }}&page={{ current_page - 1 }}" class="{{ 'disabled' if current_page == 1 else '' }}" >Last Page</a>
+                <a href="?query={{ query }}&page={{ current_page + 1 }}" class="{{ 'disabled' if current_page == total_pages else '' }}">Next Page</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

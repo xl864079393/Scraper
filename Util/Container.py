@@ -38,8 +38,8 @@ class Container:
 
         self.bitmap[word] = bitmap
 
-    def add_posting(self, term, document_id, term_frequency, positions):
-        posting = (document_id, term_frequency, positions)
+    def add_posting(self, term, document_id, term_frequency, positions, anchor):
+        posting = (document_id, term_frequency, positions, anchor)
         self.insert(term, posting)
         #node.index, node.doc_encoder = self._delta_encode_postings(node.index)
 

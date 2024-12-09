@@ -25,10 +25,12 @@ def process_document(document_id, json_content, link_graph, inverted_docid_dict)
         trigrams = [tuple(tokens[i:i+3]) for i in range(len(tokens) - 2)]
         return trigrams
 
-    def extract_links(soup):
-        # Extract all hyperlinks from the document
-        links = [a['href'] for a in soup.find_all('a', href = True)]
-        return links
+    def extract_links_and_anchors(soup):
+        # Extract all hyperlinks and their anchor text from the document
+        links_and_anchors = [
+            (a['href'], a.get_text(strip = True)) for a in soup.find_all('a', href = True)
+        ]
+        return links_and_anchors
 
     if not isinstance(json_content, dict) or json_content["content"] is None:
         raise ValueError("Input JSON must contain a 'content' field.")
@@ -44,18 +46,20 @@ def process_document(document_id, json_content, link_graph, inverted_docid_dict)
     trigrams = generate_trigrams(tokens)
 
     # extract links
-    links = extract_links(soup)
+    links = extract_links_and_anchors(soup)
 
+    anchor_words = []
     # add links to link graph
-    for link in links:
+    for link, anchor_text in links:
         if link in inverted_docid_dict:
             link_graph.add_edge(document_id, inverted_docid_dict[link])
+            anchor_words += extract_and_stem(anchor_text)
 
     # Combine unigrams and trigrams
     all_terms = tokens + [' '.join(trigram) for trigram in trigrams]
 
     # Return both unigrams and trigrams for indexing/search
-    return document_id, all_terms
+    return document_id, all_terms, anchor_words
 
 
 # 被InvertController.start调用
@@ -73,7 +77,6 @@ def build_from_json_files(folder_path, inverted_index):
         if file_name.endswith(".json")
     ]
 
-    start_time = time.time()
     for file_path in all_files:
         with open(file_path, "r", encoding = "utf-8") as file:
             json_content = file.read()
@@ -82,8 +85,6 @@ def build_from_json_files(folder_path, inverted_index):
         inverted_docid_dict[json_content["url"]] = num
         num+=1
         print(num)
-    end_time = time.time()
-    print(f"Time to read docid_dict: {end_time - start_time}")
 
     num = 1
     for file_path in all_files:
@@ -96,6 +97,8 @@ def build_from_json_files(folder_path, inverted_index):
 
         if document:
             inverted_index.add_document(*document)
+        else:
+            continue
 
         if num % 3000 == 0:
             if len(inverted_index.container.dict) > 4000000:
@@ -114,7 +117,7 @@ def build_from_json_files(folder_path, inverted_index):
     gc.collect()
 
     try:
-        with gzip.open("index_bookkeeping.pkl", "wb") as f:
+        with open("index_bookkeeping.pkl", "wb") as f:
             pickle.dump(index_bookkeeping, f)
 
         with gzip.open("link_graph.pkl", "wb") as f:

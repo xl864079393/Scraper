@@ -3,7 +3,6 @@
 *.log
 DEV/
 *.zip
-batches/
 *.txt
 Util/sampledata/
 *.pkl
